@@ -39,7 +39,7 @@ def _read_text_source(path: str | None) -> str | None:
 class _CustomEncoder(json.JSONEncoder):
     """自定义 JSON 编码器，处理日期时间类型。"""
 
-    def default(self, o):
+    def default(self, o: Any) -> Any:
         if isinstance(o, (datetime, date, time)):
             return o.isoformat()
         return super().default(o)
@@ -223,7 +223,7 @@ class RdbCommand(Command):
             log.error(f"执行失败: {e}")
             return False
 
-    def _display_result(self, result: list[dict], output_format: str) -> None:
+    def _display_result(self, result: list[dict[str, Any]], output_format: str) -> None:
         """显示查询结果。"""
         if output_format == "json":
             self._display_json(result)
@@ -234,16 +234,16 @@ class RdbCommand(Command):
         elif output_format == "table":
             self._display_table(result)
 
-    def _display_json(self, result: list[dict]) -> None:
+    def _display_json(self, result: list[dict[str, Any]]) -> None:
         """JSON 格式输出。"""
         print(json.dumps(result, ensure_ascii=False, indent=2, cls=_CustomEncoder))
 
-    def _display_jsonl(self, result: list[dict]) -> None:
+    def _display_jsonl(self, result: list[dict[str, Any]]) -> None:
         """JSONL 格式输出 - 每行一个 JSON 对象。"""
         for row in result:
             print(json.dumps(row, ensure_ascii=False, cls=_CustomEncoder))
 
-    def _display_csv(self, result: list[dict]) -> None:
+    def _display_csv(self, result: list[dict[str, Any]]) -> None:
         """CSV 格式输出。"""
         if not result:
             return
@@ -255,14 +255,14 @@ class RdbCommand(Command):
         writer.writerows(result)
         print(output.getvalue(), end="")
 
-    def _display_table(self, result: list[dict]) -> None:
+    def _display_table(self, result: list[dict[str, Any]]) -> None:
         """表格格式输出。"""
         if not result:
             return
 
         columns = list(result[0].keys())
 
-        col_widths = {}
+        col_widths: dict[str, int] = {}
         for col in columns:
             col_widths[col] = max(
                 len(str(col)),

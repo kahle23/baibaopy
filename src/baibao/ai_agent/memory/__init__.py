@@ -266,7 +266,7 @@ class RdbMemoryStore(MemoryStore):
                 'created_at, updated_at')
         placeholders = ', '.join([ph] * 17)
         sql = f'INSERT INTO {self._table} ({cols}) VALUES ({placeholders})'
-        params: tuple = (
+        params: tuple[Any, ...] = (
             record.scope, record.category, record.title, record.content,
             record.owner, record.owner_group, record.machine, record.agent_name,
             record.keywords, record.source, record.confidence, record.pinned,

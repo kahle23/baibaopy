@@ -92,7 +92,7 @@ class ChatResponse:
 
     content: str
     model: str
-    usage: dict[str, int] = field(default_factory=dict)
+    usage: dict[str, int] = field(default_factory=dict[str, int])
     finish_reason: str = ""
     raw: Any = None
 
@@ -116,7 +116,7 @@ class LlmService(ABC):
         messages: list[ChatMessage],
         temperature: float = 0.7,
         max_tokens: int | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> ChatResponse:
         """
         对话，传入完整消息历史。
@@ -143,7 +143,7 @@ class LlmService(ABC):
         messages: list[ChatMessage],
         temperature: float = 0.7,
         max_tokens: int | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> Generator[str, None, None]:
         """
         流式对话，逐步返回生成的文本片段。
@@ -262,7 +262,7 @@ def chat(
     temperature: float = 0.7,
     max_tokens: int | None = None,
     llm_name: str | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> ChatResponse:
     """
     对话，传入完整消息历史。
@@ -290,7 +290,7 @@ def stream_chat(
     temperature: float = 0.7,
     max_tokens: int | None = None,
     llm_name: str | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> Generator[str, None, None]:
     """
     流式对话，逐步返回生成的文本片段。

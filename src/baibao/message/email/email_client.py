@@ -12,6 +12,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import make_msgid
 from pathlib import Path
+from typing import Any
 
 from pykunlun.util import loadutil, logutil, validation
 
@@ -120,7 +121,7 @@ class EmailSendResult:
     message_id: str
     from_addr: str
     recipients: list[str]
-    failed_recipients: dict
+    failed_recipients: dict[str, Any]
 
 
 class EmailClient:
@@ -297,7 +298,7 @@ class EmailClient:
             if bcc:
                 msg['Bcc'] = ", ".join(bcc) if isinstance(bcc, list) else bcc
             # 合并所有收件人地址
-            all_recipients = []
+            all_recipients: list[str] = []
             all_recipients.extend(to if isinstance(to, list) else [to])
             if cc:
                 all_recipients.extend(cc if isinstance(cc, list) else [cc])

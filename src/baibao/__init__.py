@@ -17,4 +17,4 @@
 from pykunlun.envinfo import pkginfo
 
 # 不捕获 PackageNotFoundError：能执行到此处说明包已加载，版本缺失应报错而非静默回退
-__version__ = pkginfo.get_package_version("baibao")
+__version__ = pkginfo.get_package_version(__name__)

@@ -131,7 +131,7 @@ def _get_currency_symbol(field: Field, data: dict[str, Any]) -> str:
     return ''
 
 
-def create_style(color: str = '', **kwargs) -> Style:
+def create_style(color: str = '', **kwargs: Any) -> Style:
     """
     模板辅助：创建 Style 对象（便于链式配置字段样式）。
 
@@ -385,7 +385,7 @@ def topn_multi_bar_chart(
             '<div class="bar-track-group">'
         )
 
-        formatted_values = []
+        formatted_values: list[str] = []
         for vf in value_fields:
             key = objutil.get_attr(vf, 'name', '') or ''
             label = objutil.get_attr(vf, 'display_name', '') or key
@@ -452,7 +452,7 @@ def multi_line_chart(
     chart_h = _SVG_HEIGHT - _SVG_PAD_T - _SVG_PAD_B
 
     # 收集所有数值，计算 Y 轴范围
-    all_vals = []
+    all_vals: list[float] = []
     for vf in value_fields:
         key = objutil.get_attr(vf, 'name', '') or ''
         for r in rows:
@@ -467,12 +467,12 @@ def multi_line_chart(
     if v_min < 0:
         v_min -= v_range * 0.05
 
-    def x_pos(i):
+    def x_pos(i: int) -> float:
         if row_count == 1:
             return _SVG_PAD_L + chart_w / 2
         return _SVG_PAD_L + i * chart_w / (row_count - 1)
 
-    def y_pos(v):
+    def y_pos(v: float) -> float:
         return _SVG_PAD_T + chart_h * (1 - (v - v_min) / (v_max - v_min))
 
     svg = [f'<svg viewBox="0 0 {_SVG_WIDTH} {_SVG_HEIGHT}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">']
@@ -620,7 +620,7 @@ def horizontal_single_bar_chart(
         tooltip_text = value_formatter(data, value) if value_formatter else f'{value:,}'
 
         # 右侧额外显示字段
-        extra_values = []
+        extra_values: list[str] = []
         if extra_fields:
             for extra in extra_fields:
                 field_name = extra.get('field', '')
@@ -672,10 +672,10 @@ def hourly_distribution_bar_chart(
     Returns:
         时段分布柱状图 HTML 字符串
     """
-    def format_hour(row, value):
+    def format_hour(row: dict[str, Any], value: Any) -> str:
         return f'{value:02d}:00'
 
-    def format_count(row, value):
+    def format_count(row: dict[str, Any], value: Any) -> str:
         return f'{value:,} 次'
 
     return horizontal_single_bar_chart(
@@ -704,7 +704,7 @@ def daily_trend_bar_chart(rows: list[dict[str, Any]], chart_title: str = '每日
     Returns:
         每日趋势柱状图 HTML 字符串
     """
-    def format_date(row, value):
+    def format_date(row: dict[str, Any], value: Any) -> str:
         date_str = str(value)[:10]
         try:
             dt = datetime.date.fromisoformat(date_str)
@@ -712,7 +712,7 @@ def daily_trend_bar_chart(rows: list[dict[str, Any]], chart_title: str = '每日
         except (ValueError, TypeError):
             return date_str
 
-    def format_count(row, value):
+    def format_count(row: dict[str, Any], value: Any) -> str:
         return f'{value:,} 次'
 
     return horizontal_single_bar_chart(

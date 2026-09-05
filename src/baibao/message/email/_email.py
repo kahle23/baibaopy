@@ -6,6 +6,7 @@
 """
 
 import threading
+from typing import Any
 
 from .email_client import EmailCfg, EmailClient, EmailSendResult
 
@@ -55,7 +56,7 @@ def get_client(cfg_name: str | None = None) -> EmailClient:
         return _clients[cfg_name]
 
 
-def set_client(cfg_name: str, client: EmailClient | EmailCfg | dict) -> None:
+def set_client(cfg_name: str, client: EmailClient | EmailCfg | dict[str, Any]) -> None:
     """
     设置指定配置名对应的 EmailClient 或 EmailCfg。
 
@@ -97,7 +98,7 @@ def remove_client(cfg_name: str | None = None) -> None:
         _clients.pop(cfg_name, None)
 
 
-def clear():
+def clear() -> None:
     """
     清空所有邮件客户端。
 
@@ -109,12 +110,12 @@ def clear():
 
 def send(
     cfg_name: str,
-    to: str | list,
+    to: str | list[str],
     subject: str,
     content: str,
-    cc: str | list | None = None,
-    bcc: str | list | None = None,
-    attachments: list | None = None,
+    cc: str | list[str] | None = None,
+    bcc: str | list[str] | None = None,
+    attachments: list[str] | None = None,
     is_html: bool = False
 ) -> EmailSendResult:
     """
@@ -143,12 +144,12 @@ def send(
 
 def send_text(
     cfg_name: str,
-    to: str | list,
+    to: str | list[str],
     subject: str,
     content: str,
-    cc: str | list | None = None,
-    bcc: str | list | None = None,
-    attachments: list | None = None
+    cc: str | list[str] | None = None,
+    bcc: str | list[str] | None = None,
+    attachments: list[str] | None = None
 ) -> EmailSendResult:
     """
     快速发送纯文本邮件。
@@ -173,12 +174,12 @@ def send_text(
 
 def send_html(
     cfg_name: str,
-    to: str | list,
+    to: str | list[str],
     subject: str,
     html_content: str,
-    cc: str | list | None = None,
-    bcc: str | list | None = None,
-    attachments: list | None = None
+    cc: str | list[str] | None = None,
+    bcc: str | list[str] | None = None,
+    attachments: list[str] | None = None
 ) -> EmailSendResult:
     """
     快速发送 HTML 邮件。

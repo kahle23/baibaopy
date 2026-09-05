@@ -33,7 +33,7 @@ class PostgresqlClient(PooledDBClient):
             self.cfg.charset = 'utf8'
         super()._validate_and_prepare_cfg()
 
-    def get_driver(self):
+    def get_driver(self) -> Any:
         return modutil.import_module('psycopg2', 'psycopg2')
 
     def build_connect_kwargs(self) -> dict[str, Any]:

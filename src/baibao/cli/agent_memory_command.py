@@ -40,7 +40,12 @@ import sys
 from datetime import date, datetime
 from typing import Any
 
-from pykunlun.ai_agent import PATH_LIKE_CATEGORIES, VALID_CATEGORIES, MemoryManager, MemoryRecord
+from pykunlun.ai_agent import (
+    PATH_LIKE_CATEGORIES,
+    VALID_CATEGORIES,
+    MemoryManager,
+    MemoryRecord,
+)
 from pykunlun.cli import CliContext, Command
 from pykunlun.util import logutil
 
@@ -83,7 +88,7 @@ def _load_config() -> dict[str, Any]:
             if os.path.isfile(p):
                 # utf-8-sig 容忍编辑器写入的 BOM
                 with open(p, encoding='utf-8-sig') as f:
-                    data = json.load(f)
+                    data: dict[str, Any] = json.load(f)
                 if isinstance(data, dict):
                     log.debug("加载记忆配置: %s", p)
                     _config_cache = data
@@ -115,7 +120,7 @@ def _read_text_source(path: str | None) -> str | None:
 class _CustomEncoder(json.JSONEncoder):
     """自定义 JSON 编码器，处理日期时间类型。"""
 
-    def default(self, o):
+    def default(self, o: Any) -> Any:
         if isinstance(o, (datetime, date)):
             return o.isoformat()
         return super().default(o)
@@ -263,12 +268,12 @@ class AgentMemoryCommand(Command):
                                 choices=['json', 'jsonl', 'csv', 'table'], default='jsonl',
                                 help='输出格式（默认: jsonl）')
 
-    def _emit(self, ctx: CliContext, rows: list[dict], fmt: str) -> None:
+    def _emit(self, ctx: CliContext, rows: list[dict[str, Any]], fmt: str) -> None:
         ctx.print_delim()
         self._format_result(rows, fmt)
         ctx.print_delim()
 
-    def _format_result(self, rows: list[dict], fmt: str) -> None:
+    def _format_result(self, rows: list[dict[str, Any]], fmt: str) -> None:
         if not rows:
             log.info("结果为空")
             return
@@ -287,7 +292,7 @@ class AgentMemoryCommand(Command):
                 print(json.dumps(row, ensure_ascii=False, cls=_CustomEncoder))
 
     @staticmethod
-    def _print_table(rows: list[dict]) -> None:
+    def _print_table(rows: list[dict[str, Any]]) -> None:
         columns = list(rows[0].keys())
         widths = {c: max(len(str(c)), max(len(str(r.get(c, ''))) for r in rows)) for c in columns}
         header = ' | '.join(str(c).ljust(widths[c]) for c in columns)
@@ -298,7 +303,7 @@ class AgentMemoryCommand(Command):
         print(f"\n共 {len(rows)} 条记录")
 
     @staticmethod
-    def _apply_snippet(rows: list[dict], limit: int) -> list[dict]:
+    def _apply_snippet(rows: list[dict[str, Any]], limit: int) -> list[dict[str, Any]]:
         """对 rows 的 content 做预览截断（recall/list 用，节省 AI 上下文）。
 
         折叠空白（含换行）为单行预览；超 limit 则截断并追加内联指示
@@ -363,12 +368,22 @@ class AgentMemoryCommand(Command):
 
         owner, owner_group, machine, agent_name, shared = self._resolve(ns)
         mgr = self._build_mgr(owner, owner_group, machine, agent_name)
-        # 去重维度翻译：--dedup 显式优先；auto 时按 category 是否路径类判定
+        # 去重维度翻译：--dedup 显式优先；auto 时按 category 是否路径类判定。
+        # machine_bound 要求 machine 已绑定；显式 machine+无 machine 是违反意图，报错拒绝；
+        # auto+路径类+无 machine 自动降级 global 并提示。
         if ns.dedup == 'machine':
+            if not machine:
+                log.error("--dedup machine 要求本机隔离判重，但未解析到 machine；"
+                          "请用 --machine 指定、设环境变量 AGENT_MEMORY_MACHINE、"
+                          "在配置文件配置 machine，或改用 --dedup global")
+                return False
             machine_bound = True
         elif ns.dedup == 'global':
             machine_bound = False
         else:  # auto
+            if ns.category in PATH_LIKE_CATEGORIES and not machine:
+                log.info("路径类 category=%s 但未配置 machine，按全局判重；"
+                         "建议配置 machine 以启用本机隔离", ns.category)
             machine_bound = (ns.category in PATH_LIKE_CATEGORIES) and bool(machine)
         # 去重：在同角色可见范围内按 scope+title 查（machine_bound 时叠加本机隔离）
         dups = mgr.find_by_scope_title(ns.scope, ns.title, shared_mode=shared,

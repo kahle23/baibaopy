@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "baibao"
-version = "0.0.5"
+version = "0.0.8"
 description = "百宝，方便好用的 Python 常用功能库。把日常开发中反复用到的能力封装成简洁的 API，开箱即用。"
 readme = "README.md"
 license = "GPL-3.0-or-later"
@@ -13,7 +13,7 @@ authors = [
     {name = "Kahle"}
 ]
 dependencies = [
-    "pykunlun>=0.0.2",
+    "pykunlun>=0.0.4",
 ]
 
 [tool.setuptools.packages.find]
@@ -24,17 +24,22 @@ all = ["easyocr>=1.7.0", "paddleocr>=2.7.0", "opencv-python>=4.8.0", "numpy>=1.2
 dev = ["pytest", "ruff", "mypy"]
 easyocr = ["easyocr>=1.7.0", "opencv-python>=4.8.0", "numpy>=1.24.0"]
 paddleocr = ["paddleocr>=2.7.0", "opencv-python>=4.8.0", "numpy>=1.24.0"]
-autotest = ["playwright>=1.40", "pytest-playwright>=0.4.3", "python-dotenv>=1.0", "faker"]
+autotest = ["playwright>=1.40", "python-dotenv>=1.0", "faker"]
 
 [tool.mypy]
 python_version = "3.10"
-check_untyped_defs = true
-warn_return_any = true
-warn_unused_configs = true
+mypy_path = "src"
+strict = true
 
 [[tool.mypy.overrides]]
 module = ["easyocr", "paddleocr", "bottle", "playwright", "playwright.sync_api", "dotenv", "faker"]
 ignore_missing_imports = true
+
+# bottle 无类型标注，其路由装饰器（@app.get/@app.post/@app.error）会把
+# 被装饰的处理函数整体降级为 untyped（untyped-decorator），属第三方库噪声
+[[tool.mypy.overrides]]
+module = "baibao.ai.ocr.server"
+disable_error_code = ["untyped-decorator"]
 
 [tool.ruff]
 target-version = "py310"
@@ -55,5 +60,3 @@ ignore = [
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
-
-

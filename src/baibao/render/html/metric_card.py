@@ -161,7 +161,7 @@ class MetricGroupSpec:
 
     title: str
     source_key: str = ''
-    metrics: list[MetricSpec] = dc_field(default_factory=list)
+    metrics: list[MetricSpec] = dc_field(default_factory=list[MetricSpec])
     currency_field: str = ''
     layout: str = 'per_currency_grid'
     renderer: Callable[[Mapping[str, Any]], str] | None = None
@@ -238,7 +238,7 @@ def render_metric_group(spec: MetricGroupSpec, data: Mapping[str, Any],
     if spec.renderer is not None:
         return spec.renderer(data)
 
-    rows = data.get(spec.source_key, []) or []
+    rows: list[Mapping[str, Any]] = data.get(spec.source_key, []) or []
     if not rows:
         return ''
     # first_row：聚合类数据（如总操作次数）只关心汇总行，截掉其余行

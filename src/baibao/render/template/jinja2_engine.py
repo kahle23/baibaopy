@@ -9,7 +9,7 @@ from collections.abc import Callable
 from typing import IO, TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    import jinja2  # type: ignore[import-not-found]
+    import jinja2
 
 from pykunlun.util import modutil
 
@@ -40,7 +40,7 @@ class Jinja2Engine(TemplateEngine):
         auto_escape: bool = True,
         cache_size: int = 400,
         undefined: str = "strict",
-        filters: dict[str, Callable] | None = None,
+        filters: dict[str, Callable[..., Any]] | None = None,
         globals: dict[str, Any] | None = None,
     ) -> None:
         """
@@ -155,7 +155,7 @@ class Jinja2Engine(TemplateEngine):
         return self._undefined
 
     @property
-    def filters(self) -> dict[str, Callable]:
+    def filters(self) -> dict[str, Callable[..., Any]]:
         """
         获取所有自定义过滤器。
 
@@ -174,7 +174,7 @@ class Jinja2Engine(TemplateEngine):
         """
         return self._globals.copy()
 
-    def add_filter(self, name: str, filter_func: Callable) -> None:
+    def add_filter(self, name: str, filter_func: Callable[..., Any]) -> None:
         """
         添加自定义过滤器。
 

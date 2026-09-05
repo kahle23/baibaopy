@@ -9,7 +9,7 @@ import os
 from collections.abc import Generator
 from typing import Any
 
-from pykunlun.system import pip
+from pykunlun.util import modutil
 
 from ._llm import ChatMessage, ChatResponse, LlmCfg, LlmService
 
@@ -77,16 +77,8 @@ class OpenAiLlm(LlmService):
             ImportError: 当 openai 库未安装且自动安装失败时抛出。
             ValueError: 当 api_key 未提供且环境变量中也未找到时抛出。
         """
-        try:
-            import openai  # type: ignore[import-not-found]
-        except ImportError:
-            success, msg = pip.install('openai')
-            if not success:
-                raise ImportError(
-                    f"openai 库未安装，自动安装失败: {msg}\n"
-                    "请手动运行: pip install openai"
-                )
-            import openai  # type: ignore[import-not-found]
+        # openai 为可选依赖：未安装时 modutil 自动 pip 安装后重导入
+        openai = modutil.import_module('openai')
 
         # 解析 API Key
         resolved_api_key = (
@@ -129,7 +121,7 @@ class OpenAiLlm(LlmService):
         return self._model
 
     @property
-    def client(self):
+    def client(self) -> Any:
         """
         获取底层的 OpenAI 客户端实例，供高级用户使用。
 
@@ -205,7 +197,7 @@ class OpenAiLlm(LlmService):
         messages: list[ChatMessage],
         temperature: float = 0.7,
         max_tokens: int | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> ChatResponse:
         """
         对话，传入完整消息历史。
@@ -243,7 +235,7 @@ class OpenAiLlm(LlmService):
         messages: list[ChatMessage],
         temperature: float = 0.7,
         max_tokens: int | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> Generator[str, None, None]:
         """
         流式对话，逐步返回生成的文本片段。

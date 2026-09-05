@@ -5,6 +5,7 @@
 """
 
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass
@@ -15,7 +16,7 @@ class Style:
     # 主体颜色（主颜色，如 "#ff0000", "red"）
     color: str | None = None
     # 自定义样式字典，用于扩展其他样式属性
-    custom: dict | None = field(default_factory=dict)
+    custom: dict[str, Any] | None = field(default_factory=dict[str, Any])
 
 
 @dataclass

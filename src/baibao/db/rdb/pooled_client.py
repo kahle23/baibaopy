@@ -9,6 +9,7 @@
 
 import threading
 from collections.abc import Callable
+from types import TracebackType
 from typing import Any, ClassVar
 
 from pykunlun.db import RdbClient
@@ -26,7 +27,7 @@ class _SingleConnectionProxy:
     其他属性与方法调用均透传给底层连接。
     """
 
-    def __init__(self, connection) -> None:
+    def __init__(self, connection: Any) -> None:
         object.__setattr__(self, '_connection', connection)
 
     def close(self) -> None:
@@ -34,10 +35,10 @@ class _SingleConnectionProxy:
         空操作，不关闭底层连接。
         """
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         return getattr(self._connection, name)
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name: str, value: Any) -> None:
         setattr(self._connection, name, value)
 
 
@@ -65,7 +66,7 @@ class PooledDBClient(RdbClient):
     #: 子类按驱动返回类型覆盖（如 ``{Decimal: float}``）。仅在调用方未传 ``converters`` 时生效。
     DEFAULT_CONVERTERS: ClassVar[dict[type, Callable[[Any], Any]] | None] = None
 
-    def __init__(self, cfg, use_pool: bool = True, mincached: int = 1,
+    def __init__(self, cfg: Any, use_pool: bool = True, mincached: int = 1,
                  maxcached: int = 10, maxconnections: int = 20) -> None:
         """
         Args:
@@ -115,7 +116,7 @@ class PooledDBClient(RdbClient):
                     pass
             self._connection = self.get_driver().connect(**self.build_connect_kwargs())
 
-    def get_connection(self):
+    def get_connection(self) -> Any:
         """
         获取数据库连接（懒加载：首次调用时才创建连接池/连接，线程安全）。
 
@@ -140,7 +141,7 @@ class PooledDBClient(RdbClient):
         return _SingleConnectionProxy(self._connection)
 
     def query(self, sql: str, params: tuple[Any, ...] | None = None,
-              converters: dict[type, Callable[[Any], Any]] | None = None) -> list[dict]:
+              converters: dict[type, Callable[[Any], Any]] | None = None) -> list[dict[str, Any]]:
         """
         执行查询（连接池/单连接版）。
 
@@ -175,9 +176,10 @@ class PooledDBClient(RdbClient):
                 self._connection.close()
                 self._connection = None
 
-    def __enter__(self):
+    # 返回类型用类名字符串而非 Self：基线 py3.10 无 typing.Self（PYI034 特例豁免）
+    def __enter__(self) -> "PooledDBClient":  # noqa: PYI034
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: type[BaseException] | None,
+                 exc_val: BaseException | None, exc_tb: TracebackType | None) -> None:
         self.close()
-        return False

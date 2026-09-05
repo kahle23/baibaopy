@@ -139,7 +139,9 @@ class TemplateEngine(ABC):
 
 
 # 子类导入必须在 TemplateEngine 定义之后，避免循环导入
-from .jinja2_engine import Jinja2Engine
+# "as Jinja2Engine" 是 mypy 显式再导出惯用法（strict 禁止隐式转发），
+# 与 ruff PLC0414 冲突，此处以 mypy 为准
+from .jinja2_engine import Jinja2Engine as Jinja2Engine  # noqa: PLC0414
 
 # 存储不同配置名对应的 TemplateEngine 实例
 _template_engines: dict[str, TemplateEngine] = {}

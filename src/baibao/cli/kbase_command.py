@@ -27,7 +27,7 @@ log = logutil.getLogger(__name__)
 
 
 # region ======== 通用工具 ========
-def _mk(path: Path, desc: str = "", title: str = ""):
+def _mk(path: Path, desc: str = "", title: str = "") -> None:
     """
     创建目录；若提供说明则写入 README.md 作为导航与占位。
 
@@ -82,10 +82,10 @@ class KbaseTemplate:
 
     name: str
     description: str = ""
-    top_levels: dict[str, str] = field(default_factory=dict)
-    second_levels: dict[str, list[str]] = field(default_factory=dict)
-    project_templates: dict[str, dict[str, list[str]]] = field(default_factory=dict)
-    seed_projects: list[tuple[str, str]] = field(default_factory=list)
+    top_levels: dict[str, str] = field(default_factory=dict[str, str])
+    second_levels: dict[str, list[str]] = field(default_factory=dict[str, list[str]])
+    project_templates: dict[str, dict[str, list[str]]] = field(default_factory=dict[str, dict[str, list[str]]])
+    seed_projects: list[tuple[str, str]] = field(default_factory=list[tuple[str, str]])
     project_root_name: str = "02-项目资产"
     template_number: str = "99"
     number_digits: int = 2
@@ -163,7 +163,7 @@ class KbaseTemplate:
 
     def _next_number(self, base: Path) -> str:
         """扫描项目资产目录，返回下一个未占用编号字符串。"""
-        used = set()
+        used: set[int] = set()
         if base.exists():
             for entry in base.iterdir():
                 if entry.is_dir():

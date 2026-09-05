@@ -33,7 +33,7 @@ class MysqlClient(PooledDBClient):
             self.cfg.charset = 'utf8mb4'
         super()._validate_and_prepare_cfg()
 
-    def get_driver(self):
+    def get_driver(self) -> Any:
         return modutil.import_module('pymysql', 'pymysql')
 
     def build_connect_kwargs(self) -> dict[str, Any]:
