@@ -9,6 +9,7 @@ from pykunlun.cli import CommandManager
 
 from .agent_memory_command import AgentMemoryCommand
 from .agent_task_command import AgentTaskCommand
+from .autotest_command import AutotestCommand
 from .help_command import BaibaoHelpCommand
 from .kbase_command import KbaseInitCommand
 from .ocr_command import OcrCommand
@@ -37,3 +38,4 @@ command_manager.register(OcrCommand())
 command_manager.register(RdbCommand())
 command_manager.register(AgentMemoryCommand())
 command_manager.register(AgentTaskCommand())
+command_manager.register(AutotestCommand())
