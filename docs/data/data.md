@@ -114,7 +114,7 @@ field = Field(
 )
 ```
 
-`Field` 与 `Style` 主要配合 `baibao.render.html` 的表格、图表、指标卡片函数使用，详见 [render 模块文档](render.md)。
+`Field` 与 `Style` 主要配合 `baibao.render.html` 的表格、图表、指标卡片函数使用，详见 [render 模块文档](../output/render.md)。
 
 ---
 

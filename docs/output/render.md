@@ -109,7 +109,7 @@ engine = get_template_engine("custom")
 
 提供面向报告场景的 HTML 片段构建函数（表格、柱状图、折线图、指标卡片）。所有输出均经过 HTML 转义以防止 XSS，纯函数无副作用，常配合 `template` 模块拼装完整报告。
 
-> 字段元数据（`Field` / `Style`）来自 [`baibao.data`](data.md#2-meta---元数据模块)。
+> 字段元数据（`Field` / `Style`）来自 [`baibao.data`](../data/data.md#2-meta---元数据模块)。
 
 ### 2.1 表格
 

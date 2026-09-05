@@ -242,7 +242,7 @@ ocr = build_ocr_engine('paddle', cfg)
 text = ocr.recognize("image.png")
 ```
 
-`OcrCfg` 字段（只收敛各引擎通用的）：
+`OcrCfg` 字段（只收敛各引擎通用的；``server`` 的连接参数不在此，见下）：
 
 | 字段 | 说明 |
 |------|------|
@@ -255,6 +255,12 @@ text = ocr.recognize("image.png")
 > baibao 在此之上提供 EasyOCR / PaddleOCR 的具体实现（带重依赖）并再导出。
 > 不想用统一配置时，也可直接构造各引擎类（`EasyOcr(cfg)` / `PaddleOcr(cfg)` 等），
 > 或用 `set_ocr_engine` 注册具名实例后 `recognize(path, ocr_name=...)`。
+
+> ``server`` 引擎的专属参数（服务端地址 `server_url`、要求服务端使用的引擎 `server_engine`、
+> 超时 `timeout`）**不放入通用 `OcrCfg`**，而由 `ServerOcr` 自身构造参数表达：
+> `ServerOcr(cfg, server_url=..., server_engine=..., timeout=...)`；走工厂时用
+> `build_ocr_engine('server', cfg, server_url=..., server_engine=..., server_timeout=...)`。
+> `server_url` 缺省时取环境变量 `BAIBAO_OCR_SERVER_URL`，再退回默认 `http://127.0.0.1:8000`。
 
 ### EasyOCR 配置
 

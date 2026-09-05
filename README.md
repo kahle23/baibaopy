@@ -40,21 +40,24 @@ python -m pip install easyocr opencv-python numpy -i https://pypi.tuna.tsinghua.
 python -m pip install paddlepaddle paddleocr opencv-python numpy -i https://pypi.tuna.tsinghua.edu.cn/simple/
 ```
 
-> PaddleOCR 在新版 Python（3.13）/ Windows 上有几个坑（torch 的 `c10.dll`、paddlepaddle 的 mkldnn PIR bug、3.0.0 与 PP-OCRv6 不兼容等），其中 mkldnn 的坑 baibao 已内置绕过。详见 [AI 模块文档 — PaddleOCR 版本与已知坑](./docs/ai.md)。
+> PaddleOCR 在新版 Python（3.13）/ Windows 上有几个坑（torch 的 `c10.dll`、paddlepaddle 的 mkldnn PIR bug、3.0.0 与 PP-OCRv6 不兼容等），其中 mkldnn 的坑 baibao 已内置绕过。详见 [AI 模块文档 — PaddleOCR 版本与已知坑](./docs/ai/ai.md)。
 
 <br />
 
 ### 模块概览
 
+> 完整文档清单与使用指南见 [docs/README.md](./docs/README.md)。
+
 | 分类 | 模块 | 功能 | 文档 |
 |------|------|------|------|
-| **AI** | `baibao.ai` | LLM 对话（OpenAI 兼容）、OCR 文字识别（EasyOCR/PaddleOCR） | [文档](https://github.com/kahle23/pybaibao/blob/master/docs/ai.md) |
-| **数据** | `baibao.data` | 货币查询、元数据定义（Field/Style） | [文档](https://github.com/kahle23/pybaibao/blob/master/docs/data.md) |
-| **渲染** | `baibao.render` | HTML 报告片段（表格/图表/指标卡片）、模板引擎（Jinja2） | [文档](https://github.com/kahle23/pybaibao/blob/master/docs/render.md) |
-| **数据库** | `baibao.db` | MySQL/PostgreSQL 连接池与查询 | [文档](https://github.com/kahle23/pybaibao/blob/master/docs/db.md) |
-| **消息** | `baibao.message` | 邮件发送（文本/HTML/附件） | [文档](https://github.com/kahle23/pybaibao/blob/master/docs/message.md) |
-| **命令行** | `baibao.cli` | CLI 命令行工具（包管理、项目清理） | [文档](https://github.com/kahle23/pybaibao/blob/master/docs/cli.md) |
-| **自动化测试** | `baibao.autotest` | Playwright E2E 测试基础设施（BasePage/CDP 点击/登录态缓存） | [文档](https://github.com/kahle23/pybaibao/blob/master/docs/autotest.md) |
+| **AI** | `baibao.ai` | LLM 对话（OpenAI 兼容）、OCR 文字识别（EasyOCR/PaddleOCR） | [文档](https://github.com/kahle23/pybaibao/blob/master/docs/ai/ai.md) |
+| **AI Agent** | `baibao.ai_agent` | AI 记忆（`am`）、计划任务（`pt`）、prompt 模板库（`ap`） | [记忆](https://github.com/kahle23/pybaibao/blob/master/docs/ai/agent_memory.md) · [计划任务](https://github.com/kahle23/pybaibao/blob/master/docs/ai/plan_task.md) · [prompt 模板](https://github.com/kahle23/pybaibao/blob/master/docs/ai/agent_prompt.md) |
+| **数据** | `baibao.data` | 货币查询、元数据定义（Field/Style） | [文档](https://github.com/kahle23/pybaibao/blob/master/docs/data/data.md) |
+| **渲染** | `baibao.render` | HTML 报告片段（表格/图表/指标卡片）、模板引擎（Jinja2） | [文档](https://github.com/kahle23/pybaibao/blob/master/docs/output/render.md) |
+| **数据库** | `baibao.db` | MySQL/PostgreSQL 连接池与查询 | [文档](https://github.com/kahle23/pybaibao/blob/master/docs/data/db.md) |
+| **消息** | `baibao.message` | 邮件发送（文本/HTML/附件） | [文档](https://github.com/kahle23/pybaibao/blob/master/docs/output/message.md) |
+| **命令行** | `baibao.cli` | CLI 命令行工具（包管理、项目清理、数据库、OCR 等） | [文档](https://github.com/kahle23/pybaibao/blob/master/docs/cli.md) |
+| **自动化测试** | `baibao.autotest` | Playwright E2E 测试基础设施（BasePage/真实输入/登录态缓存/DOM 探针） | [文档](https://github.com/kahle23/pybaibao/blob/master/docs/test/autotest.md) |
 
 <br />
 
@@ -80,6 +83,10 @@ python -m pip install ".[dev]"
 
 # 安装全部依赖
 python -m pip install ".[all]"
+
+
+
+python -m pip install --upgrade baibao -i https://pypi.tuna.tsinghua.edu.cn/simple/
 ```
 
 <br />
@@ -92,6 +99,10 @@ python -m ruff check src/
 
 # 类型检查
 python -m mypy src/
+
+# 类型检查（Pyright strict，配置在 pyrightconfig.json；
+# 全局安装：npm install -g pyright，国内镜像加 --registry=https://registry.npmmirror.com）
+pyright src/
 
 # 运行测试
 python -m pytest tests/
@@ -126,5 +137,3 @@ python -m twine upload dist/*
 GPL-3.0-or-later
 
 <br />
-
-

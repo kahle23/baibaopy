@@ -5,7 +5,7 @@ OCR 命令 - 识别图片中的文字。
 默认输出纯文本，便于脚本与无视觉能力的模型直接消费识别结果。
 
 使用方式：
-    python -m baibao ocr <图片路径>                                  默认 easy 引擎
+    python -m baibao ocr <图片路径>                                  默认 rapid 引擎（轻量本地）
     python -m baibao ocr <图片路径> --engine paddle                  PaddleOCR（中文精度更高）
     python -m baibao ocr <图片路径> --engine paddle --lang en         英文识别
     python -m baibao ocr <图片路径> --engine paddle --cpu-threads 8   多线程 CPU 推理
@@ -28,19 +28,23 @@ log = logutil.getLogger(__name__)
 
 # 支持的引擎类型。引擎构造与参数映射统一收敛在 build_ocr_engine，
 # 本命令只负责解析参数、组装 OcrCfg、调用工厂。
-# - easy    : EasyOCR（命令默认）
-# - paddle  : PaddleOcr 自动分发器（按已装 paddleocr 版本选 V2/V3）
+# - rapid   : RapidOCR（命令默认）：rapidocr + onnxruntime，约 30MB 内置 PP-OCRv6
+#             small 模型，恒 CPU、中英文，免 PaddlePaddle/torch、运行时零联网
+# - easy    : EasyOCR（多语言，torch 系，首次需下载约 1GB 模型）
+# - paddle  : PaddleOcr 自动分发器（按已装 paddleocr 版本选 V2/V3，中文精度更高）
 # - paddle2 : 显式 PaddleOcrV2（paddleocr 2.x API）
 # - paddle3 : 显式 PaddleOcrV3（paddleocr 3.x API）
-_ENGINE_TYPES = ('easy', 'paddle', 'paddle2', 'paddle3')
-DEFAULT_ENGINE = "easy"
+# - server  : 不加载本地模型，转发给运行中的 baibao ocr_server（客户端零重依赖）
+_ENGINE_TYPES = ('rapid', 'easy', 'paddle', 'paddle2', 'paddle3', 'server')
+DEFAULT_ENGINE = "rapid"
 
 
 class OcrCommand(Command):
     """
     图片文字识别（OCR）命令。
 
-    支持 EasyOCR（默认，多语言）与 PaddleOCR（中文精度更高）两种引擎。
+    默认 RapidOCR（轻量本地：模型内置、恒 CPU、中英文），可选 EasyOCR（多语言）、
+    PaddleOCR（中文精度更高）与 server（转发常驻 ocr_server）等引擎。
     默认向 stdout 输出纯文本，便于模型/脚本直接消费；加 ``--details`` 输出
     含坐标与置信度的 JSON；加 ``--draw`` 将识别框绘制到图片并另存。
     日志信息走 stderr，识别文字走 stdout，二者分离。
@@ -52,7 +56,7 @@ class OcrCommand(Command):
 
     @property
     def description(self) -> str:
-        return "识别图片中的文字（OCR，支持 easy/paddle 引擎）"
+        return "识别图片中的文字（OCR，支持 rapid/easy/paddle/server 引擎）"
 
     @property
     def usage(self) -> str:
@@ -66,6 +70,10 @@ class OcrCommand(Command):
             "      --lang CODE            识别语言（默认 ch 中英；如 en、japan、ko、ch_tra）\n"
             "      --gpu                  启用 GPU（需已装 GPU 版依赖）\n"
             "      --cpu-threads N        CPU 推理线程数（仅 paddle 引擎生效）\n"
+            "      --server-url URL       server 引擎的 ocr_server 地址"
+            "（默认 http://127.0.0.1:8000；或环境变量 BAIBAO_OCR_SERVER_URL）\n"
+            "      --server-engine NAME   server 引擎要求服务端使用的引擎"
+            "（如 paddle3；不填用服务端默认）\n"
             "  -d, --details               输出含坐标与置信度的 JSON 详情\n"
             "      --delim STR            结果分隔符：设则用其在 stdout 结果前后各占一行包裹，\n"
             "                              便于在夹杂日志时精准截取（由调用方保证唯一）\n"
@@ -78,7 +86,7 @@ class OcrCommand(Command):
             "  python -m baibao ocr shot.png --engine paddle --cpu-threads 8\n"
             "  python -m baibao ocr shot.png --engine paddle --delim __OCR__ 2>$null\n"
             "  python -m baibao ocr shot.png --details --draw out.png\n"
-
+            "  python -m baibao ocr shot.png --engine server --server-engine paddle3\n"
         )
 
     # region ======== 参数解析 ========
@@ -105,7 +113,7 @@ class OcrCommand(Command):
         parser.add_argument(
             "--gpu",
             action="store_true",
-            help="启用 GPU（easyocr 需 CUDA 版 torch；paddle 需 paddlepaddle-gpu）",
+            help="启用 GPU（easyocr 需 CUDA 版 torch；paddle 需 paddlepaddle-gpu；rapid 恒 CPU 不支持）",
         )
         parser.add_argument(
             "--cpu-threads",
@@ -113,7 +121,17 @@ class OcrCommand(Command):
             default=None,
             help="CPU 推理线程数（仅 paddle 引擎生效，加快 CPU 推理）",
         )
-
+        parser.add_argument(
+            "--server-url",
+            default=None,
+            help="server 引擎的 ocr_server 地址"
+            "（默认 http://127.0.0.1:8000；或环境变量 BAIBAO_OCR_SERVER_URL）",
+        )
+        parser.add_argument(
+            "--server-engine",
+            default=None,
+            help="server 引擎要求服务端使用的引擎（如 paddle3；不填用服务端默认）",
+        )
         parser.add_argument(
             "-d", "--details",
             action="store_true",
@@ -134,17 +152,23 @@ class OcrCommand(Command):
         self,
         engine_type: str,
         options: OcrCfg,
+        *,
+        server_url: str | None = None,
+        server_engine: str | None = None,
     ) -> OcrEngine:
         """
         按引擎类型 + 统一选项构造 OcrEngine。
 
         引擎间的参数差异（语言码、gpu/device、cpu_threads、角度分类）由
         :func:`build_ocr_engine` 统一映射，本命令不感知各引擎的构造细节。
+        ``server`` 引擎的专属连接参数（地址 / 服务端引擎）单独透传。
         """
-        return build_ocr_engine(engine_type, options)
+        return build_ocr_engine(
+            engine_type, options, server_url=server_url, server_engine=server_engine
+        )
 
     @staticmethod
-    def _result_to_dict(r: OcrResult) -> dict:
+    def _result_to_dict(r: OcrResult) -> dict[str, Any]:
         """将 OcrResult 转为可 JSON 序列化的字典。"""
         return {
             "text": r.text,
@@ -187,7 +211,12 @@ class OcrCommand(Command):
             cpu_threads=ns.cpu_threads,
         )
         try:
-            engine = self._build_engine(ns.engine, options)
+            engine = self._build_engine(
+                ns.engine,
+                options,
+                server_url=ns.server_url,
+                server_engine=ns.server_engine,
+            )
         except Exception as e:
             log.error(f"初始化 OCR 引擎失败: {e}")
             _emit("(OCR 失败：引擎初始化失败；详见 stderr)")

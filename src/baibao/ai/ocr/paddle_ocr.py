@@ -115,7 +115,7 @@ class PaddleOcrV2(OcrEngine):
         """获取是否启用角度分类器。"""
         return self._use_angle_cls
 
-    def _recognize_array(self, image: 'np.ndarray') -> list[OcrResult]:
+    def _recognize_array(self, image: 'np.ndarray[Any, np.dtype[Any]]') -> list[OcrResult]:
         """
         调用 paddleocr 2.x 识别图像数组。
 
@@ -128,7 +128,10 @@ class PaddleOcrV2(OcrEngine):
         Returns:
             :class:`OcrResult` 对象列表。
         """
-        result = self._ocr.ocr(image, cls=self._use_angle_cls)
+        # 本类仅运行于 paddleocr 2.x（分发器 PaddleOcr 按 major version 分发），
+        # 2.x 的 .ocr() 是正当 API；本机装 3.x 时 pyright 才把它标为 deprecated
+        # （3.x 用 .predict()），连带 Unknown 均为跨版本类型标注错位，故行级豁免。
+        result: Any = self._ocr.ocr(image, cls=self._use_angle_cls)  # pyright: ignore[reportDeprecated, reportUnknownMemberType, reportUnknownVariableType]
         if not result or not result[0]:
             return []
 
@@ -214,7 +217,9 @@ class PaddleOcrV3(OcrEngine):
             kwargs['device'] = 'gpu:0'
         if cfg.cpu_threads is not None:
             kwargs['cpu_threads'] = cfg.cpu_threads
-        self._ocr = PaddleOCR(**kwargs)
+        # paddleocr 无类型标注（项目不做 stubs）：实例收口为显式 Any——
+        # reportUnknown* 只报 Unknown、不报显式 Any；返回结构在用到处按真实形状注解。
+        self._ocr: Any = PaddleOCR(**kwargs)
 
     @property
     def lang(self) -> str:
@@ -226,7 +231,7 @@ class PaddleOcrV3(OcrEngine):
         """获取是否启用文本行方向分类。"""
         return self._use_textline_orientation
 
-    def _recognize_array(self, image: 'np.ndarray') -> list[OcrResult]:
+    def _recognize_array(self, image: 'np.ndarray[Any, np.dtype[Any]]') -> list[OcrResult]:
         """
         调用 paddleocr 3.x 识别图像数组。
 
@@ -247,22 +252,21 @@ class PaddleOcrV3(OcrEngine):
         if not output:
             return []
 
-        data = output[0].json
+        data: dict[str, Any] = output[0].json
         # paddleocr 3.7+ 把识别结果再包了一层 'res'（结构为 {'res': {...}}），剥掉取内层。
         # 兼容未包裹的旧结构：仅当确实存在 'res' 字典时才剥。
         if isinstance(data, dict) and isinstance(data.get('res'), dict):
             data = data['res']
-        texts = data.get('rec_texts') or []
-        scores = data.get('rec_scores') or []
-        polys = data.get('rec_polys') or []
+        texts: list[str] = data.get('rec_texts') or []
+        scores: list[float] = data.get('rec_scores') or []
+        polys: list[list[Any]] = data.get('rec_polys') or []
 
         results: list[OcrResult] = []
         for i, text in enumerate(texts):
             confidence = float(scores[i]) if i < len(scores) else 0.0
+            bbox: list[tuple[int, int]] = []
             if i < len(polys):
                 bbox = [(int(point[0]), int(point[1])) for point in polys[i]]
-            else:
-                bbox = []
             results.append(OcrResult(text=text or '', bbox=bbox, confidence=confidence))
         return results
 
@@ -353,8 +357,8 @@ class PaddleOcr(OcrEngine):
         """获取底层实现配置的语言代码。"""
         return self._delegate.lang
 
-    def _recognize_array(self, image: 'np.ndarray') -> list[OcrResult]:
-        """转发给底层 V2 / V3 实现。"""
-        return self._delegate._recognize_array(image)
+    def _recognize_array(self, image: 'np.ndarray[Any, np.dtype[Any]]') -> list[OcrResult]:
+        """转发给底层 V2 / V3 实现（同族类白盒协作）。"""
+        return self._delegate._recognize_array(image)  # pyright: ignore[reportPrivateUsage]
 
 # endregion
