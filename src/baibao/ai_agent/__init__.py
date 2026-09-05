@@ -6,14 +6,12 @@ AI Agent 能力模块（baibao 侧实现）。
 
 当前包含：
   - 记忆（:mod:`baibao.ai_agent.memory`：基于 rdb_mgr 的 ``RdbMemoryStore``）
-  - 长任务（:mod:`baibao.ai_agent.long_task`：基于 rdb_mgr 的 ``MySqlLongTaskService``）
 
-后续可扩展技能管理等。
+后续可扩展技能管理等。原长任务子包已随「计划任务」通用化迁移至
+:mod:`baibao.task.plan`（抽象层 :mod:`pykunlun.task.plan`）。
 """
 
-from . import long_task, memory
-from .long_task import MySqlLongTaskService, task_mgr
+from . import memory
 from .memory import RdbMemoryStore, memory_mgr
 
-__all__ = ['MySqlLongTaskService', 'RdbMemoryStore', 'long_task', 'memory', 'memory_mgr',
-           'task_mgr']
+__all__ = ['RdbMemoryStore', 'memory', 'memory_mgr']

@@ -1,28 +1,16 @@
 """
-长任务 MySQL 表结构定义（单一信息源）。
+计划任务 MySQL 表结构定义（单一信息源）。
 
-集中承载 ``ai_task_*`` 六张表的列定义、索引/唯一键与表注释，并提供 DDL 生成
+集中承载 ``ai_task_*`` 五张表的列定义、索引/唯一键与表注释，并提供 DDL 生成
 函数 :func:`ddl`——列清单只此一份，建表语句由此生成，避免重复维护
 （对标 ``baibao.ai_agent.memory`` 的 ``_COLUMNS`` 做法）。
 
 本期仅 MySQL 方言；未来扩展其他方言时在列元组中追加定义列即可。
 """
 
-_COLUMNS_TEMPLATE: list[tuple[str, str, str]] = [
-    #列名            MySQL                                      注释
-    ('id',             'BIGINT AUTO_INCREMENT PRIMARY KEY',     '主键，自增'),
-    ('name',           'VARCHAR(64) NOT NULL',                  '模板名（唯一）'),
-    ('skill_ref',      'VARCHAR(128) DEFAULT NULL',             '关联的技能标识'),
-    ('description',    'VARCHAR(512) DEFAULT NULL',             '模板说明'),
-    ('default_params', 'JSON DEFAULT NULL',                     '默认参数'),
-    ('step_blueprint', 'JSON DEFAULT NULL',                     '步骤蓝图 [{name,instruction,step_type,timeout_sec,max_retries}]'),
-    ('created_at',     'DATETIME NOT NULL',                     '创建时间'),
-    ('updated_at',     'DATETIME NOT NULL',                     '更新时间'),
-]
-
 _COLUMNS_INSTANCE: list[tuple[str, str, str]] = [
     ('id',                    'BIGINT AUTO_INCREMENT PRIMARY KEY', '主键，自增'),
-    ('template_id',           'BIGINT DEFAULT NULL',               '来源模板 id；NULL=临时任务'),
+    ('template_id',           'BIGINT DEFAULT NULL',               '来源标识 id（上层自定义）；NULL=无来源'),
     ('parent_task_id',        'BIGINT DEFAULT NULL',               '父任务 id；NULL=顶层'),
     ('title',                 'VARCHAR(255) NOT NULL',             '任务标题'),
     ('goal',                  'MEDIUMTEXT NOT NULL',               '任务目标（喂给编排层的总指令）'),
@@ -50,6 +38,7 @@ _COLUMNS_STEP: list[tuple[str, str, str]] = [
     ('retry_count',    'INT NOT NULL DEFAULT 0',                '已重试次数'),
     ('max_retries',    'INT NOT NULL DEFAULT 1',                '最大重试次数（含首次共 max_retries+1 次机会）'),
     ('timeout_sec',    'INT DEFAULT NULL',                      '单步超时秒；NULL=不限'),
+    ('depends_on',     'TEXT DEFAULT NULL',                     '依赖的同任务更早步骤 seq 列表（JSON 数组）；NULL=无显式依赖，claim 依赖感知模式依据'),
     ('result_summary', 'TEXT DEFAULT NULL',                     '执行结果摘要（续跑会话的上下文来源）'),
     ('started_at',     'DATETIME DEFAULT NULL',                 '首次 claim 时间'),
     ('finished_at',    'DATETIME DEFAULT NULL',                 '终态时间'),
@@ -95,11 +84,6 @@ _COLUMNS_EVENT: list[tuple[str, str, str]] = [
 
 #: 表注册表：基名 → (列定义, 索引/唯一键, 表注释)；建表 DDL 由此生成
 TABLES: dict[str, tuple[list[tuple[str, str, str]], list[str], str]] = {
-    'ai_task_template': (
-        _COLUMNS_TEMPLATE,
-        ['UNIQUE KEY uk_ai_task_template_name (name)'],
-        '长任务模板',
-    ),
     'ai_task_instance': (
         _COLUMNS_INSTANCE,
         [
@@ -108,7 +92,7 @@ TABLES: dict[str, tuple[list[tuple[str, str, str]], list[str], str]] = {
             'KEY idx_ai_task_inst_template (template_id)',
             'KEY idx_ai_task_inst_parent (parent_task_id)',
         ],
-        '长任务实例',
+        '计划任务',
     ),
     'ai_task_step': (
         _COLUMNS_STEP,
@@ -116,7 +100,7 @@ TABLES: dict[str, tuple[list[tuple[str, str, str]], list[str], str]] = {
             'UNIQUE KEY uk_ai_task_step_seq (task_id, seq)',
             'KEY idx_ai_task_step_status (task_id, status)',
         ],
-        '长任务步骤（计划）',
+        '计划任务步骤（计划）',
     ),
     'ai_task_run': (
         _COLUMNS_RUN,
@@ -125,7 +109,7 @@ TABLES: dict[str, tuple[list[tuple[str, str, str]], list[str], str]] = {
             'KEY idx_ai_task_run_task (task_id)',
             'KEY idx_ai_task_run_status (status)',
         ],
-        '长任务执行记录（尝试）',
+        '计划任务执行记录（尝试）',
     ),
     'ai_task_artifact': (
         _COLUMNS_ARTIFACT,
@@ -133,17 +117,17 @@ TABLES: dict[str, tuple[list[tuple[str, str, str]], list[str], str]] = {
             'KEY idx_ai_task_art_task (task_id)',
             'KEY idx_ai_task_art_step (step_id)',
         ],
-        '长任务产物',
+        '计划任务产物',
     ),
     'ai_task_event': (
         _COLUMNS_EVENT,
         ['KEY idx_ai_task_event_task (task_id, id)'],
-        '长任务事件日志',
+        '计划任务事件日志',
     ),
 }
 
 
-def _sql_str(s: str) -> str:
+def sql_str(s: str) -> str:
     """转 SQL 单引号字符串字面量（``'`` → ``''`` 转义）。"""
     return "'" + s.replace("'", "''") + "'"
 
@@ -157,8 +141,8 @@ def ddl(base: str, table: str) -> str:
         table: 实际表名（已拼前缀）。
     """
     cols, keys, comment = TABLES[base]
-    col_lines = [f'    {c[0]} {c[1]} COMMENT {_sql_str(c[2])}' for c in cols]
+    col_lines = [f'    {c[0]} {c[1]} COMMENT {sql_str(c[2])}' for c in cols]
     key_lines = [f'    {k}' for k in keys]
     body = ',\n'.join(col_lines + key_lines)
     return (f'CREATE TABLE IF NOT EXISTS {table} (\n{body}\n) '
-            f'CHARACTER SET utf8mb4 COMMENT={_sql_str(comment)}')
+            f'CHARACTER SET utf8mb4 COMMENT={sql_str(comment)}')
