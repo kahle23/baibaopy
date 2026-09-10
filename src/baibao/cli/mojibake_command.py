@@ -75,7 +75,6 @@ class MojibakeCommand(Command):
         )
 
     # region ======== 参数解析 ========
-
     def _parse_args(self, args: list[str]) -> argparse.Namespace:
         parser = argparse.ArgumentParser(
             prog=f"python -m baibao {self.name}",
@@ -113,7 +112,6 @@ class MojibakeCommand(Command):
             help="扫描的文件后缀（默认 .java；可多次指定以扫描多种类型）",
         )
         return parser.parse_args(args)
-
     # endregion
 
     def execute(self, ctx: CliContext) -> Any:

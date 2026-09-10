@@ -69,7 +69,6 @@ _COLUMNS: list[tuple[str, str, str, str, str]] = [
 def _sql_str(s: str) -> str:
     """转 SQL 单引号字符串字面量（``'`` → ``''`` 转义）。"""
     return "'" + s.replace("'", "''") + "'"
-
 # endregion
 
 
@@ -137,7 +136,6 @@ class RdbMemoryStore(MemoryStore):
         return self._table
 
     # region ======== 方言自适应 ========
-
     def _get_db_type(self) -> str:
         """探测并缓存目标实例的数据库类型标识。"""
         if self._db_type is None:
@@ -147,11 +145,9 @@ class RdbMemoryStore(MemoryStore):
     def _ph(self) -> str:
         """返回当前方言的参数占位符：sqlite 用 ``?``，其余用 ``%s``。"""
         return '?' if self._get_db_type() == 'sqlite' else '%s'
-
     # endregion
 
     # region ======== 建表 DDL ========
-
     def init_store(self) -> None:
         """幂等建表 + 索引（按目标方言）。
 
@@ -239,11 +235,9 @@ class RdbMemoryStore(MemoryStore):
             for c in _COLUMNS:
                 stmts.append(f'COMMENT ON COLUMN {t}.{c[0]} IS {_sql_str(c[4])}')
         return stmts
-
     # endregion
 
     # region ======== 写操作 ========
-
     def remember(self, record: MemoryRecord, shared_mode: bool = False) -> int:
         """插入一条记忆，回填并返回新 id（参数化，防注入）。"""
         now = datetime.now()
@@ -335,11 +329,9 @@ class RdbMemoryStore(MemoryStore):
         sql = (f'UPDATE {self._table} SET use_count = use_count + 1, last_used_at = {ph} '
                f'WHERE id = {ph}')
         rdb_mgr.execute(sql, (datetime.now(), id), name=self._db_name)
-
     # endregion
 
     # region ======== 读操作 ========
-
     def get(self, id: int, shared_mode: bool = False) -> MemoryRecord | None:
         ph = self._ph()
         vis_sql, vis_params = visibility_clause(shared_mode, self._owner, ph)
@@ -451,7 +443,6 @@ class RdbMemoryStore(MemoryStore):
                f' LIMIT {ph}')
         params.append(limit)
         return rdb_mgr.query(sql, tuple(params), name=self._db_name)
-
     # endregion
 
 

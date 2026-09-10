@@ -92,7 +92,6 @@ def _decode_data_url(url: str, out_dir: str, ext: str, agent: str) -> str | None
 
 
 # region ======== agent 适配器（扩展点） ========
-
 class AgentImageAdapter:
     """
     AI agent 会话图片提取适配器（抽象基类）。
@@ -240,7 +239,6 @@ class _OpencodeAdapter(AgentImageAdapter):
 _AGENTS = {
     "opencode": _OpencodeAdapter(),
 }
-
 # endregion
 
 
@@ -305,7 +303,6 @@ class AgentImageCommand(Command):
         )
 
     # region ======== 参数解析 ========
-
     def _parse_args(self, args: list[str]) -> argparse.Namespace:
         """解析命令行参数。"""
         parser = argparse.ArgumentParser(
@@ -341,11 +338,9 @@ class AgentImageCommand(Command):
             help="仅列出最近 5 条图片记录元信息，不解码",
         )
         return parser.parse_args(args)
-
     # endregion
 
     # region ======== 执行入口 ========
-
     def execute(self, ctx: CliContext) -> Any:
         """
         执行取图命令。
@@ -429,5 +424,4 @@ class AgentImageCommand(Command):
         log.info("[%s] 已解码图片记录 → %s", ns.agent, path)
         _emit(path)
         return True
-
     # endregion

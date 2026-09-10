@@ -83,7 +83,6 @@ class MoveJavaCommand(Command):
         )
 
     # region ======== 参数解析 ========
-
     def _parse_args(self, args: list[str]) -> argparse.Namespace:
         parser = argparse.ArgumentParser(
             prog=f"python -m baibao {self.name}",
@@ -113,7 +112,6 @@ class MoveJavaCommand(Command):
             help="预演模式（不写盘）",
         )
         return parser.parse_args(args)
-
     # endregion
 
     def execute(self, ctx: CliContext) -> Any:

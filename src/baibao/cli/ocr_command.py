@@ -90,7 +90,6 @@ class OcrCommand(Command):
         )
 
     # region ======== 参数解析 ========
-
     def _parse_args(self, args: list[str]) -> argparse.Namespace:
         """解析命令行参数。"""
         parser = argparse.ArgumentParser(
@@ -143,11 +142,9 @@ class OcrCommand(Command):
             help="将识别框绘制到图片并保存到 PATH",
         )
         return parser.parse_args(args)
-
     # endregion
 
     # region ======== 输出 / 引擎构造 ========
-
     def _build_engine(
         self,
         engine_type: str,
@@ -175,11 +172,9 @@ class OcrCommand(Command):
             "confidence": round(r.confidence, 4),
             "bbox": r.bbox,
         }
-
     # endregion
 
     # region ======== 执行入口 ========
-
     def execute(self, ctx: CliContext) -> Any:
         """
         执行 OCR 识别命令。
@@ -254,5 +249,4 @@ class OcrCommand(Command):
             return False
 
         return True
-
     # endregion

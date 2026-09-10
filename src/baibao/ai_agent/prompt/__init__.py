@@ -59,7 +59,6 @@ _COLUMNS: list[tuple[str, str, str, str, str]] = [
 def _sql_str(s: str) -> str:
     """转 SQL 单引号字符串字面量（``'`` → ``''`` 转义）。"""
     return "'" + s.replace("'", "''") + "'"
-
 # endregion
 
 
@@ -206,7 +205,6 @@ def render_template(
     out = ''.join(parts)
     # 删除块后可能留下连续空行，统一折叠为最多 1 个空行
     return re.sub(r'\n{3,}', '\n\n', out)
-
 # endregion
 
 
@@ -260,7 +258,6 @@ def markdown_to_template(text: str) -> dict[str, Any]:
         raise ValueError('frontmatter 缺少必填的 name 或 title')
     result['content'] = text[close + 4:].lstrip('\n')
     return result
-
 # endregion
 
 
@@ -320,7 +317,6 @@ class RdbPromptStore:
         return self._table
 
     # region ======== 方言自适应 ========
-
     def _get_db_type(self) -> str:
         """探测并缓存目标实例的数据库类型标识。"""
         if self._db_type is None:
@@ -344,11 +340,9 @@ class RdbPromptStore:
         if shared_mode or self._owner is None:
             return 'owner IS NULL', []
         return f'owner = {ph}', [self._owner]
-
     # endregion
 
     # region ======== 建表 DDL ========
-
     def init_store(self) -> None:
         """幂等建表 + 唯一索引（按目标方言）。"""
         db_type = self._get_db_type()
@@ -382,11 +376,9 @@ class RdbPromptStore:
         if db_type == 'mysql':
             return []
         return [f'CREATE UNIQUE INDEX IF NOT EXISTS uk_{t}_name ON {t} (name)']
-
     # endregion
 
     # region ======== 写操作 ========
-
     def save(
         self,
         name: str,
@@ -526,11 +518,9 @@ class RdbPromptStore:
         sql = (f'UPDATE {self._table} SET use_count = use_count + 1, last_used_at = {ph} '
                f'WHERE id = {ph}')
         rdb_mgr.execute(sql, (datetime.now(), id_), name=self._db_name)
-
     # endregion
 
     # region ======== 读操作 ========
-
     @staticmethod
     def _attach_parsed(row: dict[str, Any] | None) -> dict[str, Any] | None:
         """给行附上解析结果：vars（元信息列表）与 blocks（块清单）。"""
@@ -666,7 +656,6 @@ class RdbPromptStore:
         sql = f'SELECT COUNT(*) AS cnt FROM {self._table} WHERE {" AND ".join(clauses)}'
         rows = rdb_mgr.query(sql, tuple(params), name=self._db_name)
         return int(rows[0]['cnt']) if rows else 0
-
     # endregion
 
 

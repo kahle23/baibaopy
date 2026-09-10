@@ -268,7 +268,6 @@ class PlanTaskCommand(Command):
             return False
 
     # region ======== 工具：配置解析与构造 ========
-
     @staticmethod
     def _build_mgr() -> PlanTaskManager:
         """构造 PlanTaskManager（rdb 实例名走配置，调用方无需关心）。"""
@@ -365,11 +364,9 @@ class PlanTaskCommand(Command):
                     preview = f'{preview}…（+{full_len - limit} 字，--full 看全文）'
                 r[fld] = preview
         return rows
-
     # endregion
 
     # region ======== 子命令实现：初始化 / 建任务 / 拆步骤 ========
-
     def _init(self, ctx: CliContext, args: list[str]) -> bool:
         parser = argparse.ArgumentParser(prog='python -m baibao plan_task init')
         parser.parse_args(args)
@@ -530,11 +527,9 @@ class PlanTaskCommand(Command):
         log.info("步骤已添加 id=%s (task=%s, seq=%s, name=%s)",
                  step_id, ns.task_id, step.seq, ns.name)
         return True
-
     # endregion
 
     # region ======== 子命令实现：执行主循环 ========
-
     def _claim(self, ctx: CliContext, args: list[str]) -> bool:
         parser = argparse.ArgumentParser(prog='python -m baibao plan_task claim')
         parser.add_argument('task_id', type=int, help='目标任务 id')
@@ -668,11 +663,9 @@ class PlanTaskCommand(Command):
         self._build_mgr().heartbeat(ns.task_id)
         log.info("task %s 心跳已刷新", ns.task_id)
         return True
-
     # endregion
 
     # region ======== 子命令实现：查询 ========
-
     def _status(self, ctx: CliContext, args: list[str]) -> bool:
         parser = argparse.ArgumentParser(prog='python -m baibao plan_task status')
         parser.add_argument('task_id', type=int, help='目标任务 id')
@@ -736,11 +729,9 @@ class PlanTaskCommand(Command):
                  ns.created_by)
         self._emit(ctx, rows, ns.format)
         return True
-
     # endregion
 
     # region ======== 子命令实现：生命周期 / 恢复 ========
-
     def _pause(self, ctx: CliContext, args: list[str]) -> bool:
         parser = argparse.ArgumentParser(prog='python -m baibao plan_task pause')
         parser.add_argument('task_id', type=int, help='目标任务 id')
@@ -838,11 +829,9 @@ class PlanTaskCommand(Command):
                  f"，已修复 {n_fixed} 处" if ns.fix else "（加 --fix 就地修复）")
         self._emit(ctx, findings, ns.format)
         return True
-
     # endregion
 
     # region ======== 子命令实现：产物 / 事件 ========
-
     def _artifact(self, ctx: CliContext, args: list[str]) -> bool:
         if not args:
             log.error("artifact 需要二级子命令: add | list")
@@ -897,5 +886,4 @@ class PlanTaskCommand(Command):
         rows = self._build_mgr().list_events(ns.task_id, limit=ns.limit)
         self._emit(ctx, rows, ns.format)
         return True
-
     # endregion

@@ -42,7 +42,6 @@ from .paddle_ocr import PaddleOcr, PaddleOcrV2, PaddleOcrV3, get_paddleocr_versi
 from .server_ocr import ServerOcr
 
 # region ======== 引擎类型 → 实现类 工厂 ========
-
 # 引擎类型与实现类的映射。引擎间的参数差异（语言码、gpu/device、cpu_threads、角度分类）
 # 由各实现类在构造时按 cfg 自行解释，工厂只负责按类型取类并构造。
 _ENGINE_CLASSES: dict[str, type[OcrEngine]] = {
@@ -99,13 +98,10 @@ def build_ocr_engine(
             timeout=server_timeout,
         )
     return cls(cfg)
-
-
 # endregion
 
 
 # region ======== 模块级具名实例管理（兼容旧 API，背后由 OcrManager 单例托管） ========
-
 # 托管具名实例的默认管理器。类注册表留空（本模块直接 register_engine 实例），
 # 仅用其实例注册表与 get/recognize 便捷能力。
 _default_manager = OcrManager()
@@ -214,8 +210,6 @@ def recognize_and_draw(
     return get_ocr_engine(ocr_name).recognize_and_draw(
         image, output_path=output_path, color=color, thickness=thickness
     )
-
-
 # endregion
 
 

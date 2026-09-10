@@ -55,7 +55,6 @@ log = logging.getLogger(__name__)
 sqlite3.register_adapter(datetime, lambda dt: dt.isoformat())
 
 # region ======== 配置加载 ========
-
 _config_loaded = False
 
 
@@ -81,13 +80,10 @@ def _config_loader(manager: RdbManager, name: str) -> None:
             manager.register(n, cfg)
     except Exception as e:
         log.warning("Failed to load rdb config: %s", e)
-
-
 # endregion
 
 
 # region ======== 模块级管理器实例 ========
-
 #: 模块级默认管理器实例：按名称（别名）管理各数据库客户端实例，
 #: 同时承载备份服务注册表（按 db_type），经 dump/restore 方法备份/恢复。
 rdb_mgr: RdbManager = RdbManager(config_loader=_config_loader)
@@ -96,7 +92,6 @@ rdb_mgr: RdbManager = RdbManager(config_loader=_config_loader)
 rdb_mgr.register_backup_service(MysqlBackupService())
 rdb_mgr.register_backup_service(PostgresqlBackupService())
 rdb_mgr.register_backup_service(SqliteBackupService())
-
 # endregion
 
 

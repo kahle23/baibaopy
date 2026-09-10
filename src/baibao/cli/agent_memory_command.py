@@ -212,7 +212,6 @@ class AgentMemoryCommand(Command):
             return False
 
     # region ======== 工具：身份解析与构造 ========
-
     @staticmethod
     def _resolve(ns: argparse.Namespace) -> tuple[str | None, str | None, str | None, str | None, bool]:
         """解析 (owner, owner_group, machine, agent_name, shared_mode)。
@@ -319,11 +318,9 @@ class AgentMemoryCommand(Command):
                 preview = f'{preview}…（+{full_len - limit} 字，get {r.get("id")} 看全文）'
             r['content'] = preview
         return rows
-
     # endregion
 
     # region ======== 子命令实现 ========
-
     def _init(self, ctx: CliContext, args: list[str]) -> bool:
         parser = argparse.ArgumentParser(prog='python -m baibao agent_memory init')
         self._common(parser)
@@ -517,5 +514,4 @@ class AgentMemoryCommand(Command):
         print(f"{n} 条记忆{'（含软删除）' if ns.all else ''}")
         ctx.print_delim()
         return True
-
     # endregion

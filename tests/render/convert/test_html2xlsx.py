@@ -7,13 +7,8 @@ from pathlib import Path
 import pytest
 from openpyxl import load_workbook
 
-from baibao.render.html2xlsx import (
-    BorderStyle,
-    CellStyle,
-    Html2XlsxProfile,
-    ImageAnchor,
-    convert_html_to_xlsx,
-)
+from baibao.office.excel import BorderStyle, CellStyle, ImageAnchor
+from baibao.render.convert.html2xlsx import Html2XlsxProfile, convert_html_to_xlsx
 
 # 1x1 透明 PNG（最小合法 PNG，仅用于锚定计数，不校验像素）
 _TINY_PNG = bytes.fromhex(
@@ -29,7 +24,7 @@ def _convert(tmp_path: Path, html: str, profile: Html2XlsxProfile | None = None,
 
 
 def test_table_structure_and_merges(tmp_path: Path) -> None:
-    """colspan/rowspan 展开为网格并生成合并区，行列数正确。"""
+    """colspan/rowspan 展开为基础网格合并区；50/25/25 → 基础列段 [12, 6, 6]。"""
     html = """
     <div class="doc">
       <table class="goods-table">
@@ -43,13 +38,15 @@ def test_table_structure_and_merges(tmp_path: Path) -> None:
     """
     result, wb = _convert(tmp_path, html)
     ws = wb.active
-    assert result.cols == 3
+    assert result.cols == 24
     assert ws.cell(row=1, column=1).value == "名称"
     assert ws.cell(row=2, column=1).value == "款A"
-    assert ws.cell(row=3, column=2).value == "共计：110"
+    assert ws.cell(row=3, column=13).value == "共计：110"
     merged = {str(r) for r in ws.merged_cells.ranges}
-    assert "A2:A3" in merged
-    assert "B3:C3" in merged
+    assert "A2:L3" in merged
+    assert "M3:X3" in merged
+    # 基础网格等宽
+    assert ws.column_dimensions["A"].width == pytest.approx(118 / 24, abs=0.1)
 
 
 def test_style_mapping_font_align_fill_border(tmp_path: Path) -> None:
@@ -69,7 +66,7 @@ def test_style_mapping_font_align_fill_border(tmp_path: Path) -> None:
     result, wb = _convert(tmp_path, html, profile)
     ws = wb.active
     assert result.warnings == []
-    num_cell = ws.cell(row=2, column=2)
+    num_cell = ws.cell(row=2, column=13)  # 2列均分 → 第2逻辑列从基础列13起
     assert not num_cell.font.bold  # 非表头不加粗
     assert num_cell.alignment.horizontal == "right"
     assert num_cell.fill.fgColor.rgb == "FFF3F3F3"
@@ -77,7 +74,7 @@ def test_style_mapping_font_align_fill_border(tmp_path: Path) -> None:
     th = ws.cell(row=1, column=1)
     assert th.font.bold is True
     assert th.alignment.horizontal == "center"
-    # 全线框：四边都有细边框
+    # 全线框：合并区内每个成员格都有边框
     assert ws.cell(row=2, column=1).border.top.style == "thin"
     assert ws.cell(row=2, column=1).border.bottom.style == "thin"
     # px → pt
@@ -100,29 +97,36 @@ def test_border_none_and_block_bottom_border(tmp_path: Path) -> None:
     )
     _, wb = _convert(tmp_path, html, profile)
     ws = wb.active
+    # 逻辑第1列（基础列1..12）整段无边框
     assert ws.cell(row=1, column=1).border.bottom.style is None
-    assert ws.cell(row=1, column=2).border.bottom.style == "thin"
+    assert ws.cell(row=1, column=2).border.bottom.style is None
+    # 逻辑第2列（基础列13起）保持全线框
+    assert ws.cell(row=1, column=13).border.bottom.style == "thin"
     # 条款行：合并整行宽 + 底边框
     assert ws.cell(row=3, column=1).border.bottom.style == "thin"
     assert any(str(r).startswith("A3:") for r in ws.merged_cells.ranges)
 
 
-def test_column_widths_from_percent(tmp_path: Path) -> None:
-    """首行 width% 按总预算分摊列宽，未标注列均摊剩余。"""
+def test_table_column_plan_from_percent(tmp_path: Path) -> None:
+    """首行 width% → 基础列段边界：75/25 → 18/6 根基础列，物理列宽保持等宽。"""
     html = """
     <table class="t">
       <tr><th style="width:75%">甲</th><th>乙</th></tr>
       <tr><td>a</td><td>b</td></tr>
     </table>
     """
-    profile = Html2XlsxProfile(total_width_chars=100.0)
-    _, wb = _convert(tmp_path, html, profile)
+    result, wb = _convert(tmp_path, html, Html2XlsxProfile(total_width_chars=100.0))
     ws = wb.active
-    w1 = ws.column_dimensions["A"].width
-    w2 = ws.column_dimensions["B"].width
-    assert w1 == pytest.approx(75.0)
-    assert w2 == pytest.approx(25.0)
-    assert w1 > w2
+    merged = {str(r) for r in ws.merged_cells.ranges}
+    assert "A1:R1" in merged  # 75% → 基础列 1..18
+    assert "S1:X1" in merged  # 25% → 基础列 19..24
+    assert ws.cell(row=1, column=1).value == "甲"
+    assert ws.cell(row=1, column=19).value == "乙"
+    from openpyxl.utils import get_column_letter
+
+    widths = {ws.column_dimensions[get_column_letter(c)].width for c in range(1, 25)}
+    assert len(widths) == 1  # 物理列等宽，比例由合并组合表达
+    assert result.warnings == []
 
 
 def test_column_layout_two_bands(tmp_path: Path) -> None:
@@ -194,5 +198,36 @@ def test_position_rule_via_table_style_rule(tmp_path: Path) -> None:
     profile = Html2XlsxProfile(table_style_rule=rule)
     _, wb = _convert(tmp_path, html, profile)
     ws = wb.active
+    # 3列均分 → 基础列段 1..8 / 9..16 / 17..24，成员格均带样式
     assert ws.cell(row=2, column=1).border.bottom.style is None
-    assert ws.cell(row=2, column=2).border.bottom.style == "thin"
+    assert ws.cell(row=2, column=2).border.bottom.style is None
+    assert ws.cell(row=2, column=9).border.bottom.style == "thin"
+    assert ws.cell(row=2, column=10).border.bottom.style == "thin"
+
+
+def test_style_degradation_warnings(tmp_path: Path) -> None:
+    """
+    无法解析的样式值与无 Excel 对应物的 CSS 属性记入 warnings，不静默丢弃。
+    """
+    html = (
+        '<p style="color: rgb(0, 0, 0); border: solid 1px black; '
+        'letter-spacing: 2px; text-align: justify">文本</p>'
+    )
+    result, wb = _convert(tmp_path, html)
+    ws = wb.active
+    joined = "\n".join(result.warnings)
+    assert "无法解析颜色: rgb(0, 0, 0)" in joined
+    assert "无法解析 border: solid 1px black" in joined
+    assert "忽略无 Excel 对应物的 CSS 属性: letter-spacing" in joined
+    assert "无法解析 text-align: justify" in joined
+    assert ws.cell(row=1, column=1).value == "文本"
+
+
+def test_warnings_deduplicated(tmp_path: Path) -> None:
+    """
+    同类降级只保留首条：未知属性多次出现仅记一条警告。
+    """
+    html = "<p style='letter-spacing: 1px'>甲</p><p style='letter-spacing: 2px'>乙</p>"
+    result, _ = _convert(tmp_path, html)
+    spacing = [w for w in result.warnings if "letter-spacing" in w]
+    assert len(spacing) == 1

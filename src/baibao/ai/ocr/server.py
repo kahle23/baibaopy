@@ -46,7 +46,6 @@ log = logutil.getLogger(__name__)
 
 
 # region ======== 常量 ========
-
 # 支持的引擎类型（与 baibao.ai.ocr.build_ocr_engine 对齐）。
 ENGINE_TYPES: tuple[str, ...] = ('rapid', 'easy', 'paddle', 'paddle2', 'paddle3')
 
@@ -54,12 +53,10 @@ DEFAULT_HOST = '127.0.0.1'
 DEFAULT_PORT = 8000
 DEFAULT_ENGINES = 'rapid'
 DEFAULT_MAX_IMAGE_MB = 16
-
 # endregion
 
 
 # region ======== 已加载引擎注册表 ========
-
 @dataclass
 class _LoadedEngine:
     """一个已加载的引擎实例及其专属推理锁。"""
@@ -171,13 +168,10 @@ def preload_engines(
     if default_name:
         registry.set_default(default_name)
     return registry
-
-
 # endregion
 
 
 # region ======== 图片解码 / 工具 ========
-
 def _decode_image_bytes(raw: bytes) -> 'np.ndarray[Any, np.dtype[Any]]':
     """把原始图片字节解码为 OpenCV 图像数组（BGR）。"""
     import cv2
@@ -225,13 +219,10 @@ def _result_to_dict(r: OcrResult) -> dict[str, Any]:
         "confidence": round(float(r.confidence), 4),
         "bbox": bbox,
     }
-
-
 # endregion
 
 
 # region ======== HTTP 应用（bottle） ========
-
 def build_app(registry: OcrEngineRegistry, max_image_bytes: int) -> 'bottle.Bottle':
     """
     构造 OCR HTTP 应用（:class:`bottle.Bottle`，本身是合法的 WSGI callable）。
@@ -426,13 +417,10 @@ def build_app(registry: OcrEngineRegistry, max_image_bytes: int) -> 'bottle.Bott
         )
 
     return app
-
-
 # endregion
 
 
 # region ======== 多线程 WSGI 服务器 ========
-
 def run_server(
     registry: OcrEngineRegistry,
     host: str = DEFAULT_HOST,
@@ -501,6 +489,4 @@ def run_server(
         log.info("收到中断信号，正在关闭...")
     finally:
         httpd.server_close()
-
-
 # endregion

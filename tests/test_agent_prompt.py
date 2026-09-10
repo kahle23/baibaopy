@@ -14,8 +14,8 @@ from baibao.ai_agent.prompt import (
 )
 from baibao.db.rdb import RdbCfg, SqliteClient, rdb_mgr
 
-# region ======== 纯函数：解析与渲染 ========
 
+# region ======== 纯函数：解析与渲染 ========
 class TestParseVariables(unittest.TestCase):
     """parse_variables：变量提取（去重、保序）"""
 
@@ -172,13 +172,10 @@ class TestMarkdownExchange(unittest.TestCase):
     def test_invalid_vars_ignored(self) -> None:
         tpl = markdown_to_template('---\nname: a\ntitle: t\nvars: {bad\n---\n正文')
         self.assertIsNone(tpl['vars'])
-
-
 # endregion
 
 
 # region ======== 存储层：sqlite 临时库 ========
-
 def _reset_registry() -> None:
     """清空模块级管理器的所有已注册实例。"""
     for name in list(rdb_mgr.get_registered_names()):
@@ -428,7 +425,6 @@ class TestAttachParsed(_PromptStoreTestBase):
         row = store.find_by_name('legacy-bad')
         assert row is not None
         self.assertIn('parse_error', row['blocks'][0])
-
 # endregion
 
 

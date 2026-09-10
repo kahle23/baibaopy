@@ -26,7 +26,6 @@ if TYPE_CHECKING:
     import numpy as np
 
 # region ======== 版本探测 ========
-
 def get_paddleocr_version() -> str | None:
     """
     获取本地已安装的 paddleocr 版本号字符串（如 ``'2.7.0'``、``'3.0.0'``）。
@@ -50,12 +49,10 @@ def _major_version(version: str | None) -> int:
         return int(str(version).split('.')[0])
     except (ValueError, IndexError):
         return 0
-
 # endregion
 
 
 # region ======== PaddleOCR 2.x 封装 ========
-
 class PaddleOcrV2(OcrEngine):
     """
     基于 paddleocr **2.x** API 的本地 OCR 策略实现。
@@ -143,12 +140,10 @@ class PaddleOcrV2(OcrEngine):
             )
             for line in result[0]
         ]
-
 # endregion
 
 
 # region ======== PaddleOCR 3.x 封装 ========
-
 class PaddleOcrV3(OcrEngine):
     """
     基于 paddleocr **3.x** API 的本地 OCR 策略实现。
@@ -269,12 +264,10 @@ class PaddleOcrV3(OcrEngine):
                 bbox = [(int(point[0]), int(point[1])) for point in polys[i]]
             results.append(OcrResult(text=text or '', bbox=bbox, confidence=confidence))
         return results
-
 # endregion
 
 
 # region ======== 自动分发器 ========
-
 class PaddleOcr(OcrEngine):
     """
     PaddleOCR 自动分发器（推荐入口）。
@@ -360,5 +353,4 @@ class PaddleOcr(OcrEngine):
     def _recognize_array(self, image: 'np.ndarray[Any, np.dtype[Any]]') -> list[OcrResult]:
         """转发给底层 V2 / V3 实现（同族类白盒协作）。"""
         return self._delegate._recognize_array(image)  # pyright: ignore[reportPrivateUsage]
-
 # endregion

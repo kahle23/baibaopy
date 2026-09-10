@@ -18,6 +18,7 @@ from .mojibake_command import MojibakeCommand
 from .move_java_command import MoveJavaCommand
 from .ocr_command import OcrCommand
 from .ocr_server_command import OcrServerCommand
+from .oss_command import OssCommand
 from .path_command import PythonPathSetupCommand
 from .pip_command import PipInstallCommand, PipUpgradeCommand
 from .plan_task_command import PlanTaskCommand
@@ -51,3 +52,4 @@ command_manager.register(MojibakeCommand())
 command_manager.register(MoveJavaCommand())
 command_manager.register(AutotestCommand())
 command_manager.register(HookshotCommand())
+command_manager.register(OssCommand())

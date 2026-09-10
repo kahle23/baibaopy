@@ -30,7 +30,6 @@ class UnixEnvService(EnvVarService):
         super().__init__(platform)
 
     # region ======== 私有辅助 ========
-
     @staticmethod
     def _build_export_line(name: str, value: str) -> str:
         """
@@ -158,11 +157,9 @@ class UnixEnvService(EnvVarService):
         """
         path_list = [p for p in os.environ.get("PATH", "").split(":") if p and p != value]
         os.environ["PATH"] = ":".join(path_list)
-
     # endregion
 
     # region ======== 策略接口实现 ========
-
     def set_var(self, name: str, value: str, scope: int | None = None) -> bool:
         if scope == env_var.SCOPE_SYSTEM:
             raise ValueError("Unix 暂不支持系统级环境变量（需 root 写入 /etc/environment）")
@@ -223,5 +220,4 @@ class UnixEnvService(EnvVarService):
         # 同步到当前进程
         self._remove_from_process_path(value)
         return True
-
     # endregion

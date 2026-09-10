@@ -56,7 +56,6 @@ class ServerOcr(OcrEngine):
     _ENV_URL = 'BAIBAO_OCR_SERVER_URL'
 
     # region ======== 构造与配置校验 ========
-
     def __init__(
         self,
         cfg: OcrCfg | None = None,
@@ -91,11 +90,9 @@ class ServerOcr(OcrEngine):
         server 不使用本地 ``lang``（语言由服务端引擎决定），故覆盖基类以跳过 ``lang`` 非空校验；
         服务端连接参数（url / engine / timeout）由本类自身构造参数处理，不在 cfg 中。
         """
-
     # endregion
 
     # region ======== getter ========
-
     @property
     def server_url(self) -> str:
         """实际使用的服务端根地址。"""
@@ -110,11 +107,9 @@ class ServerOcr(OcrEngine):
     def timeout(self) -> float:
         """HTTP 请求超时秒数。"""
         return self._timeout
-
     # endregion
 
     # region ======== 图像 → base64 ========
-
     @staticmethod
     def _image_to_base64(image: object) -> str:
         """
@@ -140,11 +135,9 @@ class ServerOcr(OcrEngine):
         if not ok:
             raise RuntimeError('图像编码为 PNG 失败')
         return base64.b64encode(buf.tobytes()).decode('ascii')
-
     # endregion
 
     # region ======== HTTP 调用 ========
-
     def _post_ocr(self, image: object) -> dict[str, Any]:
         """
         把图像 POST 到服务端 ``/ocr``，返回完整响应 dict。
@@ -188,11 +181,9 @@ class ServerOcr(OcrEngine):
             )
             for d in details
         ]
-
     # endregion
 
     # region ======== OcrEngine 实现 ========
-
     def recognize(self, image: object) -> str:
         """
         识别图片中的文字，返回纯文本。
@@ -224,5 +215,4 @@ class ServerOcr(OcrEngine):
         本就需要本地 opencv），转发给 :meth:`recognize_with_details` 复用上送逻辑。
         """
         return self.recognize_with_details(image)
-
     # endregion

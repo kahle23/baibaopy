@@ -296,7 +296,6 @@ class AgentPromptCommand(Command):
             return False
 
     # region ======== 工具：身份解析与构造 ========
-
     @staticmethod
     def _resolve_owner(ns: argparse.Namespace) -> str | None:
         """解析 owner。优先级：标志 > 环境变量 > 配置文件。"""
@@ -380,11 +379,9 @@ class AgentPromptCommand(Command):
                 preview = f'{preview}…（+{full_len - limit} 字，get {r.get("name")} 看全文）'
             r['content'] = preview
         return rows
-
     # endregion
 
     # region ======== 子命令实现 ========
-
     def _init(self, ctx: CliContext, args: list[str]) -> bool:
         parser = argparse.ArgumentParser(prog='python -m baibao agent_prompt init')
         self._common(parser)
@@ -700,5 +697,4 @@ class AgentPromptCommand(Command):
         store = self._build_store(self._resolve_owner(ns))
         self._emit(ctx, store.stats(limit=ns.limit), ns.format)
         return True
-
     # endregion

@@ -12,8 +12,8 @@ from pathlib import Path
 from threading import Lock
 from typing import Any
 
-# region ======== 配置类 ========
 
+# region ======== 配置类 ========
 @dataclass
 class LlmCfg:
     """
@@ -56,13 +56,10 @@ class LlmCfg:
         from pykunlun.util import loadutil
         cfg = loadutil.load_dataclass_from_json_file(config_path, LlmCfg)
         return cfg
-
-
 # endregion
 
 
 # region ======== 数据对象 ========
-
 @dataclass
 class ChatMessage:
     """
@@ -95,13 +92,10 @@ class ChatResponse:
     usage: dict[str, int] = field(default_factory=dict[str, int])
     finish_reason: str = ""
     raw: Any = None
-
-
 # endregion
 
 
 # region ======== 策略抽象基类 ========
-
 class LlmService(ABC):
     """
     LLM 策略抽象基类，定义统一的对话接口。
@@ -163,13 +157,10 @@ class LlmService(ABC):
             RuntimeError: API 调用失败。
         """
         pass
-
-
 # endregion
 
 
 # region ======== 模块级 LLM 管理 ========
-
 # 存储不同配置名对应的 LlmService 实例
 _llmServices: dict[str, LlmService] = {}
 # 保护 _llmServices 字典并发访问的锁
@@ -311,6 +302,4 @@ def stream_chat(
         max_tokens=max_tokens,
         **kwargs,
     )
-
-
 # endregion

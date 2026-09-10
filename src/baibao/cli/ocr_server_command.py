@@ -84,7 +84,6 @@ class OcrServerCommand(Command):
         )
 
     # region ======== 参数解析 ========
-
     def _parse_args(self, args: list[str]) -> argparse.Namespace:
         """解析命令行参数。"""
         parser = argparse.ArgumentParser(
@@ -141,11 +140,9 @@ class OcrServerCommand(Command):
             help='单次请求图片大小上限，单位 MB（默认: 16）',
         )
         return parser.parse_args(args)
-
     # endregion
 
     # region ======== 执行入口 ========
-
     def execute(self, ctx: CliContext) -> Any:
         """
         启动 OCR HTTP 服务。
@@ -216,5 +213,4 @@ class OcrServerCommand(Command):
             max_image_mb=ns.max_image_mb,
         )
         return True
-
     # endregion

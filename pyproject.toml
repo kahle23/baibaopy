@@ -25,14 +25,18 @@ dev = ["pytest", "ruff", "mypy"]
 easyocr = ["easyocr>=1.7.0", "opencv-python>=4.8.0", "numpy>=1.24.0"]
 paddleocr = ["paddleocr>=2.7.0", "opencv-python>=4.8.0", "numpy>=1.24.0"]
 autotest = ["playwright>=1.40", "python-dotenv>=1.0", "faker"]
+# 阿里云 OSS 实现的官方 SDK。不装此 extra 时 import baibao.oss 仍正常，
+# 仅在 AliyunOssClient 实际发起操作时经 modutil 自动安装。
+oss = ["oss2>=2.18.0"]
 
 [tool.mypy]
 python_version = "3.10"
 mypy_path = "src"
 strict = true
 
+# oss2 经 modutil 延迟导入（AliyunOssClient.get_driver），未安装时不应被判错
 [[tool.mypy.overrides]]
-module = ["easyocr", "paddleocr", "bottle", "playwright", "playwright.sync_api", "dotenv", "faker"]
+module = ["easyocr", "paddleocr", "bottle", "playwright", "playwright.sync_api", "dotenv", "faker", "oss2"]
 ignore_missing_imports = true
 
 # bottle 无类型标注，其路由装饰器（@app.get/@app.post/@app.error）会把
@@ -49,6 +53,7 @@ ignore = [
     "S110",    # try-except-pass：资源清理场景，静默是预期行为
     "BLE001",  # 盲异常：与 S110 重叠的工具库资源清理场景
     "DTZ005",  # datetime.now() 无 tz：工具库默认使用 naive datetime
+    "DTZ006",  # fromtimestamp() 无 tz：同上（naive datetime 为全项目约定）
     "DTZ007",  # strptime 无 %z：同上
     "DTZ011",  # date.today() 无 tz：同上（naive date）
     # PIE790：不必要的 pass 语句

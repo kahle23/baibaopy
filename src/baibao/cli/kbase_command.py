@@ -254,8 +254,6 @@ register_template(KbaseTemplate(
     },
     seed_projects=[("自研", "模板自研项目"), ("三方", "模板三方系统")],
 ))
-
-
 # endregion
 
 

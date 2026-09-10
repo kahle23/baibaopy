@@ -31,7 +31,6 @@ class WindowsEnvService(EnvVarService):
         super().__init__(platform)
 
     # region ======== 私有辅助 ========
-
     @staticmethod
     def _run_powershell(command: str) -> str | None:
         """
@@ -151,11 +150,9 @@ class WindowsEnvService(EnvVarService):
         """
         path_list = [p for p in os.environ.get("PATH", "").split(";") if p and p != value]
         os.environ["PATH"] = ";".join(path_list)
-
     # endregion
 
     # region ======== 策略接口实现 ========
-
     def set_var(self, name: str, value: str, scope: int | None = None) -> bool:
         # scope：None / SCOPE_SYSTEM(1) -> 'Machine'；SCOPE_USER(2) -> 'User'
         target = 'User' if scope == env_var.SCOPE_USER else 'Machine'
@@ -231,5 +228,4 @@ class WindowsEnvService(EnvVarService):
         except subprocess.SubprocessError as e:
             log.error("从 Windows PATH 移除时出错: %s", e)
             return False
-
     # endregion

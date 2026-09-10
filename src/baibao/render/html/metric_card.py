@@ -37,8 +37,8 @@ from typing import Any
 
 from baibao.data import currency as currency_mod
 
-# region ======== 基础格式化辅助 ========
 
+# region ======== 基础格式化辅助 ========
 def _esc(value: Any) -> str:
     """转义 HTML 文本节点内容（仅 ``&`` ``<`` ``>``），防止 XSS。"""
     return html.escape(str(value), quote=False)
@@ -103,12 +103,10 @@ def _resolve_currency_symbol(row: Mapping[str, Any],
         code = str(row.get(currency_field, '') or '')
         return currency_mod.get_symbol_by_code(code, code)
     return ''
-
 # endregion
 
 
 # region ======== 数据类 ========
-
 @dataclass
 class MetricSpec:
     """单张指标卡片的渲染规则。
@@ -165,12 +163,10 @@ class MetricGroupSpec:
     currency_field: str = ''
     layout: str = 'per_currency_grid'
     renderer: Callable[[Mapping[str, Any]], str] | None = None
-
 # endregion
 
 
 # region ======== 渲染逻辑 ========
-
 def _format_metric_value(spec: MetricSpec, row: Mapping[str, Any],
                          currency_symbol: str) -> str:
     """根据 :attr:`MetricSpec.format_type` 把行字段格式化为卡片显示文本。"""
@@ -278,5 +274,4 @@ def render_metric_section(specs: Sequence[MetricGroupSpec], data: Mapping[str, A
         拼接所有分组后的 HTML 片段字符串
     """
     return ''.join(render_metric_group(spec, data, currency_resolver) for spec in specs)
-
 # endregion

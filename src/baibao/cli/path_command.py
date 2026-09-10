@@ -40,7 +40,6 @@ class PythonPathSetupCommand(Command):
         return "python -m baibao python_path_setup [--force]"
 
     # region ======== 私有方法 ========
-
     def _confirm_action(self, action: str) -> bool:
         """
         确认用户操作。
@@ -107,11 +106,9 @@ class PythonPathSetupCommand(Command):
         log.info("[OK] 已将 %s 添加到 PATH", expected_value)
 
         return True
-
     # endregion
 
     # region ======== 公共方法 ========
-
     def execute(self, ctx: CliContext) -> Any:
         """
         执行命令，将 Python 安装目录和 Scripts 目录添加到 PATH。
@@ -184,5 +181,4 @@ class PythonPathSetupCommand(Command):
             log.info("  export PATH=$PATH:%s:%s", python_home, scripts_dir)
 
         return True
-
     # endregion
